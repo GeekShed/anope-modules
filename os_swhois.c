@@ -185,7 +185,7 @@ static int swhois_syntax(User *u)
 
 static void os_help(User *u)
 {
-	notice_user(s_OperServ, u, "    SWHOIS    Manage swhois list");
+	notice_user(s_OperServ, u, "    SWHOIS      Manage swhois list");
 }
 
 static int os_help_swhois(User *u)

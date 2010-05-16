@@ -158,12 +158,5 @@ int my_os_tssync_help(User *u) {
 
 /* Add the command to help */
 void my_operserv_help(User *u) {
-    if (is_services_root(u))
-       notice(s_OperServ, u->nick, "    TSSYNC        Sync the clocks between servers.");
-    else if (is_services_admin(u))
-       notice(s_OperServ, u->nick, "    TSSYNC        Sync the clocks between servers.");
-    else if (is_services_oper(u))
-       notice(s_OperServ, u->nick, "    TSSYNC        Sync the clocks between servers.");
-	else
-       notice(s_OperServ, u->nick, "    TSSYNC        Sync the clocks between servers.");
+    notice(s_OperServ, u->nick, "    TSSYNC      Sync the clocks between servers.");
 }
