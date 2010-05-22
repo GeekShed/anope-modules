@@ -242,7 +242,7 @@ int do_redirect(User *u)
 				
 				moduleNoticeLang(s_ChanServ, u, CSREDIRECT_SUCCESS, ci->name, ci2->name);
 				alog("%s: %s!%s@%s redirected %s to %s",
-					s_ChanServ, u->nick, u->username, u->host, ci->name, ci2->name);
+					 s_ChanServ, u->nick, u->username, u->host, ci->name, ci2->name);
 			}
 		
 			free(new);
@@ -261,7 +261,7 @@ int do_redirect(User *u)
 			
 				moduleNoticeLang(s_ChanServ, u, CSDEREDIRECT_SUCCESS, ci->name);
 				alog("%s: %s!%s@%s removed the redirect on %s",
-					s_ChanServ, u->nick, u->username, u->host, ci->name);
+					 s_ChanServ, u->nick, u->username, u->host, ci->name);
 			}
 		}
 		

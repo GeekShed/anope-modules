@@ -96,7 +96,10 @@ int myDoRegister(User *u)
 								if (nc->email) {
 									if (!stricmp(email, nc->email)) {
 										moduleNoticeLang(s_NickServ, u, REGGROUP_REGISTER_ERROR, email);
+										// Signify a break from the while loop
 										stop = 1;
+										// Signify a brea from the for loop
+										break;
 									}
 								}
 							}
