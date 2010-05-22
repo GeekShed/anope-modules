@@ -98,7 +98,7 @@ int myDoRegister(User *u)
 										moduleNoticeLang(s_NickServ, u, REGGROUP_REGISTER_ERROR, email);
 										// Signify a break from the while loop
 										stop = 1;
-										// Signify a brea from the for loop
+										// Signify a break from the for loop
 										break;
 									}
 								}
