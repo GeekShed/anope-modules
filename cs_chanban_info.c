@@ -86,8 +86,8 @@ int AnopeInit(int argc, char **argv)
 
 	/*
 	Add the SET command again for the purpose of adding stuff to /cs help set
-	calls doModCont as using NULL causes Anope to crash. This is due to a (possible)
-	bug in 1.8.4.
+	calls doModCont as using NULL causes Anope to crash. This is due to a
+	bug in 1.8.4. This is fixed in 1.8.5.
 	*/
 	c = createCommand("SET", doModCont, NULL, -1, -1, -1, -1, -1);
 	moduleAddHelp(c, mMainSetHelp);
@@ -173,10 +173,6 @@ int myAddBanAppealInfo(User * u)
 					free(cmd);
 					return MOD_STOP;
 				}
-				/* Log is svsadmin override */
-				else if (is_servadmin && !check_access(u, ci, CA_SET)) {
-					alog("cs_chanban_info: %s changed the ban appeal info on %s as services admin", u->nick, chan);
-				}
 
 				info = myStrGetTokenRemainder(text, ' ', 2);
 
@@ -197,6 +193,8 @@ int myAddBanAppealInfo(User * u)
 					/* Add the module data to the channel */
 					moduleAddData(&ci->moduleData, "chanbaninfo", info);
 					moduleNoticeLang(s_ChanServ, u, CCHANBAN_ADD_SUCCESS, chan);
+					
+					alog("cs_chanban_info: %s!%s@%s set ban appeal info on %s to: %s", u->nick, u->username, u->host, chan, info);
 
 					free(info);
 				}
@@ -205,6 +203,8 @@ int myAddBanAppealInfo(User * u)
 					/* Del the module data from the channel */
 					moduleDelData(&ci->moduleData, "chanbaninfo");
 					moduleNoticeLang(s_ChanServ, u,	CCHANBAN_DEL_SUCCESS, chan);
+					
+					alog("cs_chanban_info: %s!%s@%s unset ban appeal info on %s", u->nick, u->username, u->host, chan);
 				}
 
 				free(cmd);
