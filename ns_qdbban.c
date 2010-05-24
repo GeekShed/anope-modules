@@ -174,12 +174,12 @@ int myAddQDBBan(User * u)
 							if (stricmp(setting, "ON") == 0) {
 								moduleAddData(&nc->moduleData, "qdbban", "on");
 								moduleNoticeLang(s_NickServ, u, QDBBAN_ADD_SUCCESS, nc->display);
-								alog("ns_qdbban: %s banned %s from using the QDB", u->nick, nc->display);
+								alog("ns_qdbban: %s!%s@%s banned %s from using the QDB", u->nick, u->username, u->host, nc->display);
 							}
 							else if (stricmp(setting, "OFF") == 0) {
 								moduleDelData(&nc->moduleData, "qdbban");
 								moduleNoticeLang(s_NickServ, u, QDBBAN_DEL_SUCCESS, nc->display);
-								alog("ns_qdbban: %s unbanned %s from using the QDB", u->nick, nc->display);
+								alog("ns_qdbban: %s!%s@%s unbanned %s from using the QDB", u->nick, u->username, u->host, nc->display);
 							}
 							else {
 								moduleNoticeLang(s_NickServ, u, QDBBAN_HELP);
