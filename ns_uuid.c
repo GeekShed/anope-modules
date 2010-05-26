@@ -193,6 +193,7 @@ int do_uuid(User *u)
 		}
 	}
 
+	return MOD_CONT;
 }
 
 /**
@@ -237,6 +238,8 @@ int do_event_register(int argc, char **argv)
 
 		autoIncrement++;
 	}
+	
+	return 0;
 }
 
 /**
