@@ -18,7 +18,6 @@
 
 #include <module.h>
 #include <math.h>
-#include <assert.h>
 
 #define AUTHOR "Phil"
 #define VERSION "1.0"
