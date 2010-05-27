@@ -166,7 +166,7 @@ int do_uuid(User *u)
 					moduleNoticeLang(s_NickServ, u, NSUUID_THEID, nc->display, uuid);
 				}
 				else {
-					notice_user(s_NickServ, u, "%s does not have a UUID! This shouldn't happen", nc->display);
+					notice_user(s_NickServ, u, "%s does not have a UUID! This shouldn't happen.", nc->display);
 				}
 			}
 		}
@@ -188,7 +188,7 @@ int do_uuid(User *u)
 				moduleNoticeLang(s_NickServ, u, NSUUID_YOURID, uuid);
 			}
 			else {
-				notice_user(s_NickServ, u, "You do not have a UUID! This shouldn't happen");
+				notice_user(s_NickServ, u, "You do not have a UUID! This shouldn't happen.");
 			}
 		}
 	}
