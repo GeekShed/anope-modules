@@ -108,6 +108,8 @@ int do_saregister(User *u)
 			na->nc->language = NSDefLanguage;
 			na->nc->email = sstrdup(email);
 
+			send_event(EVENT_NICK_REGISTERED, 1, nick);
+			
 			alog("%s: %s (%s@%s) used saregister to register %s", s_NickServ, u->nick, u->username, u->host, nick);
 
 			notice_user(s_NickServ, u, "Nick \2%s\2 has been registered", nick);
