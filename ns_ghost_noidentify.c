@@ -306,6 +306,8 @@ int forceid(User *u)
 			na->last_seen = time(NULL);
 			change_user_mode(u, "+r", "");
 
+			send_event(EVENT_NICK_IDENTIFY, 1, u->nick);
+
 			if (NSModeOnID) {
 				do_setmodes(u);
 			}
