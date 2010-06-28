@@ -382,6 +382,7 @@ void save_ajoin_db(void);
 AjoinEntry *go_to_next_entry(uint16 skipped, AjoinEntry *next, AjoinEntry *ae);
 
 int nick_registered(int argc, char **argv);
+int nick_ident(int argc, char **argv);
 int client_connect(int argc, char **argv);
 
 int valid_ircd(void);
@@ -443,15 +444,22 @@ int AnopeInit(int argc, char **argv) {
 
 
 	/* Hook to the IDENTIFY and UPDATE command */
-	c = createCommand("IDENTIFY", do_identify, NULL, -1, -1, -1, -1, -1);
-	if (moduleAddCommand(NICKSERV,c,MOD_TAIL) != MOD_ERR_OK) {
-		alog("[\002ns_ajoin\002] Cannot hook to IDENTIFY command...");
-		return MOD_STOP;
-	}
+	//c = createCommand("IDENTIFY", do_identify, NULL, -1, -1, -1, -1, -1);
+	//if (moduleAddCommand(NICKSERV,c,MOD_TAIL) != MOD_ERR_OK) {
+	//	alog("[\002ns_ajoin\002] Cannot hook to IDENTIFY command...");
+	//	return MOD_STOP;
+	//}
 
-	c = createCommand("ID", do_identify, NULL, -1, -1, -1, -1, -1);
-	if (moduleAddCommand(NICKSERV,c,MOD_TAIL) != MOD_ERR_OK) {
-		alog("[\002ns_ajoin\002] Cannot hook to ID command...");
+	//c = createCommand("ID", do_identify, NULL, -1, -1, -1, -1, -1);
+	//if (moduleAddCommand(NICKSERV,c,MOD_TAIL) != MOD_ERR_OK) {
+	//	alog("[\002ns_ajoin\002] Cannot hook to ID command...");
+	//	return MOD_STOP;
+	//}
+
+	// Phil's change
+	hook = createEventHook(EVENT_NICK_IDENTIFY, nick_ident);
+	if (moduleAddEventHook(hook) != MOD_ERR_OK) {
+		alog("[\002ns_ajoin\002] Can't hook to EVENT_NICK_IDENTIFY event");
 		return MOD_STOP;
 	}
 
@@ -791,6 +799,15 @@ int do_ajoin(User *u) {
 	return MOD_CONT;
 }
 
+int nick_ident(int argc, char **argv) {
+	User *u = NULL;
+
+	if ((u = finduser(argv[0]))) {
+		do_identify(u);
+	}
+
+	return MOD_CONT;
+}
 
 int do_identify(User *u) {
 	int i = 0, ok, needinvite, counter_succ = 0, counter_f = 0;
