@@ -6,7 +6,6 @@
 
 #define LLIST_FOREACH(list, var) for (var = list->head; var; var = var->next)
 
-/*
 typedef struct lentry_ LEntry;
 struct lentry_
 {
@@ -68,8 +67,6 @@ static void LListDelData(LList *list, void *data)
 		}
 	}
 }
-
-*/
 
 static LList SWhois_List;
 
@@ -185,7 +182,7 @@ static int swhois_syntax(User *u)
 
 static void os_help(User *u)
 {
-	notice_user(s_OperServ, u, "    SWHOIS      Manage swhois list");
+	notice_user(s_OperServ, u, "    SWHOIS    Manage swhois list");
 }
 
 static int os_help_swhois(User *u)
