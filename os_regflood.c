@@ -119,15 +119,15 @@ int AnopeInit(int argc, char **argv)
 
 	c = createCommand("REGISTER", myDoNSRegisterHead, NULL, -1, -1, -1, -1, -1);
 	status = moduleAddCommand(NICKSERV, c, MOD_HEAD);
-	
+
 	c = createCommand("REGISTER", myDoCSRegisterHead, NULL, -1, -1, -1, -1, -1);
 	status = moduleAddCommand(CHANSERV, c, MOD_HEAD);
-	
+
 	c = createCommand("REGISTRATION", myDoRegistration, is_services_admin, -1, -1, -1, -1, -1);
 	status = moduleAddCommand(OPERSERV, c, MOD_HEAD);
 	moduleAddAdminHelp(c, osHelpRegistration);
 	moduleSetOperHelp(osHelp);
-	
+
 	if (!NSEmailReg) {
 		hook = createEventHook(EVENT_NICK_REGISTERED, myDoRegisterEvent);
 		status = moduleAddEventHook(hook);
@@ -138,7 +138,7 @@ int AnopeInit(int argc, char **argv)
 	}
 
 	hook = createEventHook(EVENT_CHAN_REGISTERED, myDoRegisterEvent);
-	status = moduleAddEventHook(hook);	
+	status = moduleAddEventHook(hook);
 
 	hook = createEventHook(EVENT_RELOAD, mEventReload);
 	status = moduleAddEventHook(hook);
@@ -175,7 +175,7 @@ int myDoCSRegisterHead(User *u)
 int handleReg(User *u, int isChan)
 {
 	char *src;
-	
+
 	if (isChan == 0) {
 		src = s_NickServ;
 	}
@@ -185,28 +185,28 @@ int handleReg(User *u, int isChan)
 
 	if (regDisabled == 1) {
 		moduleNoticeLang(src, u, USER_REG_DISABLED);
-		
+
 		return MOD_STOP;
 	}
-	
+
 	time_t now = time(NULL);
-	
+
 	// Clean array and minus from offset
 	offset -= cleanRegs(now - maxRegTime);
-	
+
 	if (offset >= maxReg) {
 		char *alert = moduleGetLangString(u, ADMIN_REG_DISABLED);
-		
+
 		alog("%s", alert);
 		anope_cmd_global(s_OperServ, alert);
-		
+
 		regDisabled = 1;
 
 		moduleNoticeLang(src, u, USER_REG_DISABLED);
-		
+
 		return MOD_STOP;
 	}
-	
+
 	return MOD_CONT;
 }
 
@@ -214,10 +214,12 @@ int handleReg(User *u, int isChan)
 int myDoRegisterEvent(int argc, char **argv)
 {
 	time_t now = time(NULL);
-	
+
 	// Add to array
-	regs[offset] = now;	
+	regs[offset] = now;
 	offset++;
+
+	return MOD_CONT;
 }
 
 /* Function to remove registrations older than t from the array */
@@ -226,32 +228,32 @@ int cleanRegs(time_t t)
 {
 	int cleanedCount = 0;
 	int i = 0;
-	
+
 	// Remove the expired entries
 	while (i < offset) {
 		if (regs[i] <= t) {
 			regs[i] = 0;
 			cleanedCount++;
 		}
-		
+
 		i++;
 	}
-	
+
 	// Move all unexpired entries up to fill space left at start of array
 	if (cleanedCount > 0) {
 		i = cleanedCount;
 		int j = 0;
-		
+
 		while (i < offset) {
 			time_t tmp = regs[i];
 			regs[i] = 0;
 			regs[j] = tmp;
-			
+
 			i++;
 			j++;
 		}
 	}
-	
+
 	return cleanedCount;
 }
 
@@ -265,7 +267,7 @@ int myDoRegistration(User *u)
 
 	if (text) {
 		param = myStrGetToken(text, ' ', 0);
-		
+
 		if (param) {
 			if (stricmp(param, "ENABLE") == 0) {
 				regDisabled = 0;
@@ -277,13 +279,13 @@ int myDoRegistration(User *u)
 			}
 			else if (stricmp(param, "STATUS") == 0) {
 				time_t now = time(NULL);
-				
+
 				offset -= cleanRegs(now - maxRegTime);
-				
+
 				notice_user(s_OperServ, u, "There has been %d registration(s) in the past %d seconds.", offset, maxRegTime);
 				notice_user(s_OperServ, u, "Registrations are disabled after %d registrations in %d seconds.", maxReg, maxRegTime);
 				notice_user(s_OperServ, u, " ");
-				
+
 				if (regDisabled == 0) {
 					notice_user(s_OperServ, u, "Registrations are currently: ENABLED");
 				}
@@ -294,14 +296,14 @@ int myDoRegistration(User *u)
 			else {
 				moduleNoticeLang(s_OperServ, u, OS_REGISTRATION_SYNTAX);
 			}
-			
+
 			free(param);
 		}
 	}
 	else {
 		moduleNoticeLang(s_OperServ, u, OS_REGISTRATION_SYNTAX);
 	}
-	
+
 	return MOD_CONT;
 }
 
@@ -315,7 +317,7 @@ int mLoadConfig(void)
 	loadConfParam("MaxReg", PARAM_INT, DEF_MAX_REG, &maxReg);
 	loadConfParam("MaxRegTime", PARAM_INT, DEF_MAX_REG_TIME, &maxRegTime);
 	loadConfParam("RegDisabled", PARAM_SET, DEF_REG_DISABLED, &regDisabled);
-	
+
 	// Allocate memory to regs based on MaxReg directive
 	if (regs == NULL) {
 		regs = malloc(maxReg * sizeof(time_t));
@@ -324,14 +326,14 @@ int mLoadConfig(void)
 	else {
 		regs = realloc(regs, maxReg * sizeof(time_t));
 	}
-	
+
 	// Recreate event hooks
 	if (myNSEmailReg != -1 && myNSEmailReg != NSEmailReg) {
 		if (!NSEmailReg) {
 			if ((status = moduleEventDelHook(EVENT_NICK_REQUESTED)) != MOD_ERR_OK) {
 				alog("os_regflood: Error deleting EVENT_NICK_REQUESTED hook (%d)", status);
 			}
-			
+
 			hook = createEventHook(EVENT_NICK_REGISTERED, myDoRegisterEvent);
 			status = moduleAddEventHook(hook);
 		}
@@ -339,14 +341,14 @@ int mLoadConfig(void)
 			if ((status = moduleEventDelHook(EVENT_NICK_REGISTERED)) != MOD_ERR_OK) {
 				alog("os_regflood: Error deleting EVENT_NICK_REGISTERED hook (%d)", status);
 			}
-			
+
 			hook = createEventHook(EVENT_NICK_REQUESTED, myDoRegisterEvent);
 			status = moduleAddEventHook(hook);
 		}
 	}
-	
+
 	myNSEmailReg = NSEmailReg;
-	
+
 	return MOD_CONT;
 }
 
@@ -430,7 +432,7 @@ void m_AddLanguages(void)
 		/* OS_REG_DISABLED */
 		"Nickname and channel registrations have been DISABLED."
 	};
-	
+
 	moduleInsertLanguage(LANG_EN_US, LANG_NUM_STRINGS, langtable_en_us);
 }
 
