@@ -6,68 +6,6 @@
 
 #define LLIST_FOREACH(list, var) for (var = list->head; var; var = var->next)
 
-typedef struct lentry_ LEntry;
-struct lentry_
-{
-	LEntry *next, *prev;
-	void *data;
-};
-
-typedef struct llist_ LList;
-struct llist_
-{
-	LEntry *head, *tail;
-	int entries;
-};
-
-static void LListAddEntry(LList *list, void *data)
-{
-	LEntry *entry = smalloc(sizeof(LEntry));
-	entry->data = data;
-	entry->next = NULL;
-
-	if (list->tail)
-	{
-		list->tail->next = entry;
-		entry->prev = list->tail;
-		list->tail = entry;
-	}
-	else
-	{
-		list->head = list->tail = entry;
-		entry->prev = NULL;
-	}
-
-	list->entries++;
-}
-
-static void LListDelEntry(LList *list, LEntry *entry)
-{
-	if (entry->prev)
-		entry->prev->next = entry->next;
-	if (entry->next)
-	 	entry->next->prev = entry->prev;
-	if (list->head == entry)
-		list->head = entry->next;
-	if (list->tail == entry)
-		list->tail = entry->prev;
-	list->entries--;
-}
-
-static void LListDelData(LList *list, void *data)
-{
-	LEntry *entry;
-
-	LLIST_FOREACH(list, entry)
-	{
-		if (entry->data == data)
-		{
-			LListDelEntry(list, entry);
-			break;
-		}
-	}
-}
-
 static LList SWhois_List;
 
 typedef struct swhois_ SWhois;
