@@ -57,6 +57,7 @@ static int do_db_save(int ac, char **av);
 static int do_db_backup(int ac, char **av);
 
 static void swhois_on(User *u);
+static void swhois_off(User *u);
 static void DelNick(const char *nick);
 
 static void LoadDatabase();
@@ -227,6 +228,7 @@ static int do_groupswhois(User *u)
 static void swhois_add(User *u, const char *nick, const char *swhois)
 {
 	NickAlias *na = findnick(nick);
+	User *u2;
 	
 	if (!na)
 	{
@@ -249,6 +251,10 @@ static void swhois_add(User *u, const char *nick, const char *swhois)
 
 		LListAddEntry(&SWhois_List, s);
 
+		if ((u2 = finduser(nick))) {
+			swhois_on(u2);
+		}
+
 		alog("%s: %s (%s!%s@%s) added %s to the swhois list", s_OperServ, u->nick, u->nick, u->username, u->host, nick);
 		notice_user(s_OperServ, u, "\x2%s\x2 has been added to the swhois list.", na->nc->display);
 	}
@@ -257,12 +263,17 @@ static void swhois_add(User *u, const char *nick, const char *swhois)
 static void swhois_del(User *u, const char *nick)
 {
 	NickAlias *na = findnick(nick);
+	User *u2;
 
 	if (!na)
 		notice_lang(s_OperServ, u, NICK_X_NOT_REGISTERED, nick);
 	else if (GetSWhois(na->nick))
 	{
 		DelNick(na->nick);
+
+		if ((u2 = finduser(nick))) {
+			swhois_off(u2);
+		}
 
 		alog("%s: %s (%s!%s@%s) removed %s from the swhois list.", s_OperServ, u->nick, u->nick, u->username, u->host, na->nc->display);
 		notice_user(s_OperServ, u, "\x2%s\x2 has been removed from the swhois list.", na->nc->display);
@@ -388,6 +399,16 @@ static void swhois_on(User *u)
 		notice_user(s_NickServ, u, "Your swhois of \x2%s %s\x2 is now activated.", u->nick, s->swhois);
 	}
 }
+
+static void swhois_off(User *u)
+{
+        if (!nick_identified(u))
+                return;
+
+        anope_cmd_swhois(s_NickServ, u->nick, "");
+        notice_user(s_NickServ, u, "Your swhois has been deactivated.");
+}
+
 
 static void DelNick(const char *nick)
 {
