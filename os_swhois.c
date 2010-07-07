@@ -66,7 +66,7 @@ int AnopeInit(int argc, char **argv)
 	Command *c;
 	EvtHook *hook;
 
-	c = createCommand("SWHOIS", do_swhois, is_services_oper, -1, -1, -1, -1, -1);
+	c = createCommand("SWHOIS", do_swhois, is_oper, -1, -1, -1, -1, -1);
 	moduleAddCommand(OPERSERV, c, MOD_HEAD);
 	moduleAddHelp(c, os_help_swhois);
 	moduleSetOperHelp(os_help);
@@ -125,7 +125,7 @@ static void os_help(User *u)
 
 static int os_help_swhois(User *u)
 {
-	if (is_services_oper(u))
+	if (is_oper(u))
 	{
 		notice_user(s_OperServ, u, "Syntax: \x2SWHOIS {ADD | DEL | LIST} [\x1Fnick\x1F] [\x1Fswhois\x1F]\x2");
 		notice_user(s_OperServ, u, " ");
