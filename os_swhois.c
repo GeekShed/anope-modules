@@ -50,6 +50,7 @@ static void swhois_list(User *u);
 
 static int do_update(User *u);
 static int do_on_identify(int ac, char **av);
+static int do_on_logout(int ac, char **av);
 static int nick_drop(int ac, char **av);
 static int nick_expire(int ac, char **av);
 static int do_group(int ac, char **av);
@@ -81,6 +82,9 @@ int AnopeInit(int argc, char **argv)
 	moduleSetNickHelp(ns_help);
 
 	hook = createEventHook(EVENT_NICK_IDENTIFY, do_on_identify);
+	moduleAddEventHook(hook);
+
+	hook = createEventHook(EVENT_NICK_LOGOUT, do_on_logout);
 	moduleAddEventHook(hook);
 
 	hook = createEventHook(EVENT_NICK_DROPPED, nick_drop);
@@ -326,6 +330,15 @@ static int do_on_identify(int ac, char **av)
 	User *u = finduser(av[0]);
 	if (u)
 		swhois_on(u);
+
+	return MOD_CONT;
+}
+
+static int do_on_logout(int ac, char **av)
+{
+	User *u = finduser(av[0]);
+	if (u)
+		swhois_off(u);
 
 	return MOD_CONT;
 }
