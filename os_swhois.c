@@ -392,6 +392,8 @@ static void swhois_on(User *u)
 	if (!nick_identified(u))
 		return;
 
+        swhois_off(u);
+
 	s = GetSWhois(u->na->nick);
 	if (s)
 	{
@@ -406,7 +408,6 @@ static void swhois_off(User *u)
                 return;
 
         anope_cmd_swhois(s_NickServ, u->nick, "");
-        notice_user(s_NickServ, u, "Your swhois has been deactivated.");
 }
 
 
