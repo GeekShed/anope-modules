@@ -115,6 +115,7 @@ int do_forceid(User *u)
 			na->status |= NS_IDENTIFIED;
 			na->last_seen = time(NULL);
 			change_user_mode(u2, "+r", "");
+			send_event(EVENT_NICK_IDENTIFY, 1, u2->nick);
 			notice_lang(s_NickServ, u2, NICK_IDENTIFY_SUCCEEDED);
 			if (LogChannel) {
 				alog("%s: \2%s\2 used FORCEID command to forcefully identify \2%s\2 to services.", s_OperServ, 
