@@ -37,12 +37,8 @@ static SWhois *GetSWhois(const char *nick)
 static int swhois_syntax(User *u);
 static void os_help(User *u);
 static int os_help_swhois(User *u);
-static void ns_help(User *u);
-static int ns_help_groupswhois(User *u);
 
 static int do_swhois(User *u);
-
-static int do_groupswhois(User *u);
 
 static void swhois_add(User *u, const char *nick, const char *swhois);
 static void swhois_del(User *u, const char *nick);
@@ -75,11 +71,6 @@ int AnopeInit(int argc, char **argv)
 
 	c = createCommand("UPDATE", do_update, NULL, -1, -1, -1, -1, -1);
 	moduleAddCommand(NICKSERV, c, MOD_HEAD);
-
-	c = createCommand("GROUPSWHOIS", do_groupswhois, nick_identified, -1, -1, -1, -1, -1);
-	moduleAddCommand(NICKSERV, c, MOD_HEAD);
-	moduleAddHelp(c, ns_help_groupswhois);
-	moduleSetNickHelp(ns_help);
 
 	hook = createEventHook(EVENT_NICK_IDENTIFY, do_on_identify);
 	moduleAddEventHook(hook);
@@ -141,22 +132,6 @@ static int os_help_swhois(User *u)
 	return MOD_CONT;
 }
 
-static void ns_help(User *u)
-{
-	notice_user(s_NickServ, u, "    GROUPSWHOIS  Syncs all the swhoises for all nicks in a group");
-}
-
-static int ns_help_groupswhois(User *u)
-{
-	notice_user(s_NickServ, u, "Syntax: \2GROUPSWHOIS\2");
-	notice_user(s_NickServ, u, " ");
-	notice_user(s_NickServ, u, "This command allows users to set the swhois of their");
-	notice_user(s_NickServ, u, "CURRENT nick to be the swhois for all nicks in the");
-	notice_user(s_NickServ, u, "same group.");
-
-	return MOD_CONT;
-}
-
 static int do_swhois(User *u)
 {
 	char *buf = moduleGetLastBuffer();
@@ -187,54 +162,13 @@ static int do_swhois(User *u)
 	return MOD_CONT;
 }
 
-static int do_groupswhois(User *u)
-{
-	SWhois *s;
-
-	if (!nick_identified(u))
-		return MOD_CONT;
-	
-	s = GetSWhois(u->nick);
-	if (s)
-	{
-		int i;
-
-		for (i = 0; i < u->na->nc->aliases.count; ++i)
-		{
-			NickAlias *na = (NickAlias *)u->na->nc->aliases.list[i];
-			SWhois *news;
-
-			if (na == u->na)
-				continue;
-
-			if (GetSWhois(na->nick))
-				DelNick(na->nick);
-
-			news = scalloc(sizeof(SWhois), 1);
-			news->nick = sstrdup(na->nick);
-			news->swhois = sstrdup(s->swhois);
-			news->creator = sstrdup(s->creator);
-			news->created = s->created;
-
-			LListAddEntry(&SWhois_List, news);
-		}
-
-		notice_user(s_NickServ, u, "ALL SWhoises in your group set to \2%s\2", s->swhois);
-	}
-	else
-	{
-		notice_user(s_NickServ, u, "You do not have a swhois set.");
-	}
-
-	return MOD_CONT;
-}
-
 static void swhois_add(User *u, const char *nick, const char *swhois)
 {
 	NickAlias *na = findnick(nick);
+	NickCore *nc = na->nc;
 	User *u2;
-	
-	if (!na)
+
+	if (!nc)
 	{
 		notice_lang(s_OperServ, u, NICK_X_NOT_REGISTERED, nick);
 	}
@@ -244,11 +178,11 @@ static void swhois_add(User *u, const char *nick, const char *swhois)
 	{
 		SWhois *s;
 
-		if (GetSWhois(na->nick))
-			DelNick(na->nick);
+		if (GetSWhois(nc->display))
+			DelNick(nc->display);
 
 		s = scalloc(sizeof(SWhois), 1);
-		s->nick = sstrdup(na->nick);
+		s->nick = sstrdup(nc->display);
 		s->swhois = sstrdup(swhois);
 		s->creator = sstrdup(u->nick);
 		s->created = time(NULL);
@@ -260,30 +194,31 @@ static void swhois_add(User *u, const char *nick, const char *swhois)
 		}
 
 		alog("%s: %s (%s!%s@%s) added %s to the swhois list", s_OperServ, u->nick, u->nick, u->username, u->host, nick);
-		notice_user(s_OperServ, u, "\x2%s\x2 has been added to the swhois list.", na->nc->display);
+		notice_user(s_OperServ, u, "\x2%s\x2 has been added to the swhois list.", nc->display);
 	}
 }
 
 static void swhois_del(User *u, const char *nick)
 {
 	NickAlias *na = findnick(nick);
+	NickCore *nc = na->nc;
 	User *u2;
 
-	if (!na)
+	if (!nc)
 		notice_lang(s_OperServ, u, NICK_X_NOT_REGISTERED, nick);
-	else if (GetSWhois(na->nick))
+	else if (GetSWhois(nc->display))
 	{
-		DelNick(na->nick);
+		DelNick(nc->display);
 
 		if ((u2 = finduser(nick))) {
 			swhois_off(u2);
 		}
 
-		alog("%s: %s (%s!%s@%s) removed %s from the swhois list.", s_OperServ, u->nick, u->nick, u->username, u->host, na->nc->display);
-		notice_user(s_OperServ, u, "\x2%s\x2 has been removed from the swhois list.", na->nc->display);
+		alog("%s: %s (%s!%s@%s) removed %s from the swhois list.", s_OperServ, u->nick, u->nick, u->username, u->host, nc->display);
+		notice_user(s_OperServ, u, "\x2%s\x2 has been removed from the swhois list.", nc->display);
 	}
 	else
-		notice_user(s_OperServ, u, "\x2%s\x2 was not found on the swhois list.", na->nc->display);
+		notice_user(s_OperServ, u, "\x2%s\x2 was not found on the swhois list.", nc->display);
 }
 
 static void swhois_list(User *u)
@@ -309,7 +244,7 @@ static void swhois_list(User *u)
 
 			tm = *localtime(&s->created);
 			strftime_lang(timebuf, sizeof(timebuf), u, STRFTIME_SHORT_DATE_FORMAT, &tm);
-			
+
 			notice_user(s_OperServ, u, "%d. %s %s %s %s", ++i, s->nick, s->creator, timebuf, s->swhois);
 		}
 
@@ -317,7 +252,7 @@ static void swhois_list(User *u)
 	}
 }
 
-static int do_update(User *u) 
+static int do_update(User *u)
 {
 	if (nick_identified(u))
 		swhois_on(u);
@@ -405,9 +340,9 @@ static void swhois_on(User *u)
 	if (!nick_identified(u))
 		return;
 
-        swhois_off(u);
+	swhois_off(u);
 
-	s = GetSWhois(u->na->nick);
+	s = GetSWhois(u->na->nc->display);
 	if (s)
 	{
 		anope_cmd_swhois(s_NickServ, u->nick, s->swhois);
@@ -427,7 +362,7 @@ static void swhois_off(User *u)
 static void DelNick(const char *nick)
 {
 	SWhois *s = GetSWhois(nick);
-	
+
 	if (s)
 	{
 		LListDelData((&SWhois_List), s);
@@ -438,7 +373,7 @@ static void DelNick(const char *nick)
 			free(s->swhois);
 		if (s->creator)
 			free(s->creator);
-		
+
 		free(s);
 	}
 }
