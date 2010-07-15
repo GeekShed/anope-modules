@@ -66,7 +66,6 @@
  ***************************************************************************
  * Scaringly empty...                                                      *
  ***************************************************************************
- ** END OF CONFIGURATION *************************** END OF CONFIGURATION **
  ****************** Don't change anything below this line ******************
  **************************************************************************/
 
@@ -98,20 +97,20 @@ int AnopeInit(int argc, char **argv)
 {
 	int i;
 	EvtHook *hook;
-	
+
 	my_add_languages();
-	
+
 	/* Hook to the fantasy event (for !* channel messages) */
 	hook = createEventHook(EVENT_BOT_FANTASY, do_fantasy);
 	if ((i = moduleAddEventHook(hook))) {
 		alog("[bs_seen] Unable to hook to fantasy events (%d)", i);
 		return MOD_STOP;
 	}
-	
+
 	/* Let Anope know who we are */
 	moduleAddAuthor(AUTHOR);
 	moduleAddVersion(VERSION);
-	
+
 	/* All done nicely, tell Anope we're fine to go */
 	return MOD_CONT;
 }
@@ -130,35 +129,35 @@ int do_fantasy(int ac, char **av)
 	User *u;
 	ChannelInfo *ci;
 	char *target;
-	
+
 	/* See if we have enough arguments (command, user, channel, target) */
 	if (ac < 4)
 		return MOD_CONT;
-	
+
 	/* Only handle !seen commands */
 	if (stricmp(av[0], "seen") == 0) {
 		u = finduser(av[1]);
 		ci = cs_findchan(av[2]);
-		
+
 		if (!u || !ci)
 			return MOD_CONT;
-		
+
 		/* Get the target we want to inspect */
 		target = myStrGetToken(av[3], ' ', 0);
-		
+
 		if (!target)
 			return MOD_CONT;
-		
+
 		/* Run the actual seen code */
 		do_seen(u, ci, target);
 		free(target);
-		
+
 		/* We return MOD_STOP here to avoid double answers on !seen
 		 * requests; this includes the !seen from the Anope core
 		 */
 		return MOD_STOP;
 	}
-	
+
 	return MOD_CONT;
 }
 
@@ -173,18 +172,18 @@ void do_seen(User * u, ChannelInfo * ci, char *target)
 	char *nick;
 	int i;
 	time_t lastseen;
-	
+
 	User *u2;
 	NickAlias *na;
 	NickAlias *na2;
 	NickAlias *na3;
 	NickCore *nc;
-	
+
 	if (debug)
 		alog("debug: [bs_seen] Doing a seen for '%s' on '%s' (Requested by '%s')", ci->name, u->nick, target);
-	
+
 	buf[0] = 0;
-	
+
 	if (!stricmp(ci->bi->nick, target)) {
 		/* The user is looking for the channel bot */
 		snprintf(buf, sizeof(buf), moduleGetLangString(u, LANG_SEEN_BOT), u->nick);
@@ -239,11 +238,11 @@ void do_seen(User * u, ChannelInfo * ci, char *target)
 			}
 		}
 	}
-	
+
 	/* Check if we have a result. If not, claim we never saw the target */
 	if (!buf[0])
 		snprintf(buf, sizeof(buf), moduleGetLangString(u, LANG_SEEN_NEVER), target);
-	
+
 	/* Send the result back to the channel */
 	anope_cmd_privmsg(ci->bi->nick, ci->name, buf);
 }

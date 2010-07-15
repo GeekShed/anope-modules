@@ -103,7 +103,6 @@ int AnopeInit(int argc, char **argv)
 
 void AnopeFini(void)
 {
-
 }
 
 static int swhois_syntax(User *u)
