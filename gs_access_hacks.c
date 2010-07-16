@@ -22,6 +22,8 @@
 /*************************************************************************/
 
 int doCont(User *u);
+int doNsSendPass(User *u);
+int doCsSendPass(User *u);
 
 /*************************************************************************/
 
@@ -42,10 +44,18 @@ int AnopeInit(int argc, char **argv)
 	/* HS LIST */
 	c = createCommand("LIST", doCont, is_host_setter, -1, -1, -1, -1, -1);
 	status = moduleAddCommand(HOSTSERV, c, MOD_HEAD);
-	
+
 	/* OS DEFCON */
 	c = createCommand("DEFCON", doCont, is_services_root, -1, -1, -1, -1, -1);
 	moduleAddCommand(OPERSERV, c, MOD_HEAD);
+
+	/* NS SENDPASS */
+	c = createCommand("SENDPASS", doNsSendPass, NULL, -1, -1, -1, -1, -1);
+	moduleAddCommand(NICKSERV, c, MOD_HEAD);
+
+	/* CS SENDPASS */
+	c = createCommand("SENDPASS", doCsSendPass, NULL, -1, -1, -1, -1, -1);
+	moduleAddCommand(CHANSERV, c, MOD_HEAD);
 
 	return MOD_CONT;
 }
@@ -57,9 +67,20 @@ void AnopeFini(void) {}
 
 /*************************************************************************/
 
-/* Called when someone does /hs list */
 int doCont(User *u)
 {
+	return MOD_CONT;
+}
+
+int doNsSendPass(User *u) {
+	notice_user(s_NickServ, u, "This command is disabled for security reasons. Please join #help and ask a network staff member for a password reset.");
+
+	return MOD_CONT;
+}
+
+int doCsSendPass(User *u) {
+	notice_user(s_ChanServ, u, "This command is disabled for security reasons. Please join #help for assistance.");
+
 	return MOD_CONT;
 }
 
