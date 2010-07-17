@@ -109,10 +109,196 @@ int do_help(User *u) {
 
 /* ------------------------------------------------------------------------------- */
 
+int countModes(char *str) {
+	int i, len;
+	int count = 0;
+
+	len = strlen(str);
+
+	for (i = 0; i < len; i++) {
+		if (str[i] != '+' && str[i] != '-') {
+			count++;
+		}
+	}
+
+	return count;
+}
+
+void chan_get_correct_modes(User * user, Channel * c, int give_modes, char *modebuf, char *userbuf) {
+    char *tmp;
+    int status;
+    int add_modes = 0;
+    int rem_modes = 0;
+    ChannelInfo *ci;
+
+    if (!c || !(ci = c->ci))
+        return;
+
+    if ((ci->flags & CI_VERBOTEN) || (*(c->name) == '+'))
+        return;
+
+    status = chan_get_user_status(c, user);
+
+    if (debug)
+        alog("debug: Setting correct user modes for %s on %s (current status: %d, %sgiving modes)", user->nick, c->name, status, (give_modes ? "" : "not "));
+
+    /* Changed the second line of this if a bit, to make sure unregistered
+     * users can always get modes (IE: they always have autoop enabled). Before
+     * this change, you were required to have a registered nick to be able
+     * to receive modes. I wonder who added that... *looks at Rob* ;) -GD
+     */
+    if (give_modes && (get_ignore(user->nick) == NULL)
+        && (!user->na || !(user->na->nc->flags & NI_AUTOOP))) {
+        if (ircd->owner && is_founder(user, ci))
+            add_modes |= CUS_OWNER;
+        else if ((ircd->protect || ircd->admin)
+                 && check_access(user, ci, CA_AUTOPROTECT))
+            add_modes |= CUS_PROTECT;
+        if (check_access(user, ci, CA_AUTOOP))
+            add_modes |= CUS_OP;
+        else if (ircd->halfop && check_access(user, ci, CA_AUTOHALFOP))
+            add_modes |= CUS_HALFOP;
+        else if (check_access(user, ci, CA_AUTOVOICE))
+            add_modes |= CUS_VOICE;
+    }
+
+    /* We check if every mode they have is legally acquired here, and remove
+     * the modes that they're not allowed to have. But only if SECUREOPS is
+     * on, because else every mode is legal. -GD
+     * Unless the channel has just been created. -heinz
+     *     Or the user matches CA_AUTODEOP... -GD
+     */
+    if (((ci->flags & CI_SECUREOPS) || (c->usercount == 1)
+         || check_access(user, ci, CA_AUTODEOP))
+        && !is_ulined(user->server->name)) {
+        if (ircd->owner && (status & CUS_OWNER) && !is_founder(user, ci))
+            rem_modes |= CUS_OWNER;
+        if ((ircd->protect || ircd->admin) && (status & CUS_PROTECT)
+            && !check_access(user, ci, CA_AUTOPROTECT)
+            && !check_access(user, ci, CA_PROTECTME))
+            rem_modes |= CUS_PROTECT;
+        if ((status & CUS_OP) && !check_access(user, ci, CA_AUTOOP)
+            && !check_access(user, ci, CA_OPDEOPME))
+            rem_modes |= CUS_OP;
+        if (ircd->halfop && (status & CUS_HALFOP)
+            && !check_access(user, ci, CA_AUTOHALFOP)
+            && !check_access(user, ci, CA_HALFOPME))
+            rem_modes |= CUS_HALFOP;
+    }
+
+    /* No modes to add or remove, exit function -GD */
+    if (!add_modes && !rem_modes)
+        return;
+
+    /* No need for strn* functions for modebuf, as every possible string
+     * will always fit in. -GD
+     */
+    strcpy(modebuf, "");
+    strcpy(userbuf, "");
+    if (add_modes > 0) {
+        strcat(modebuf, "+");
+        if ((add_modes & CUS_OWNER) && !(status & CUS_OWNER)) {
+            tmp = stripModePrefix(ircd->ownerset);
+            strcat(modebuf, tmp);
+            free(tmp);
+            strcat(userbuf, " ");
+            strcat(userbuf, GET_USER(user));
+        } else {
+            add_modes &= ~CUS_OWNER;
+        }
+        if ((add_modes & CUS_PROTECT) && !(status & CUS_PROTECT)) {
+            tmp = stripModePrefix(ircd->adminset);
+            strcat(modebuf, tmp);
+            free(tmp);
+            strcat(userbuf, " ");
+            strcat(userbuf, GET_USER(user));
+        } else {
+            add_modes &= ~CUS_PROTECT;
+        }
+        if ((add_modes & CUS_OP) && !(status & CUS_OP)) {
+            strcat(modebuf, "o");
+            strcat(userbuf, " ");
+            strcat(userbuf, GET_USER(user));
+            rem_modes |= CUS_DEOPPED;
+        } else {
+            add_modes &= ~CUS_OP;
+        }
+        if ((add_modes & CUS_HALFOP) && !(status & CUS_HALFOP)) {
+            strcat(modebuf, "h");
+            strcat(userbuf, " ");
+            strcat(userbuf, GET_USER(user));
+            /* Halfops are ops too, having a halfop with CUS_DEOPPED is not good - Adam */
+            rem_modes |= CUS_DEOPPED;
+        } else {
+            add_modes &= ~CUS_HALFOP;
+        }
+        if ((add_modes & CUS_VOICE) && !(status & CUS_VOICE)) {
+            strcat(modebuf, "v");
+            strcat(userbuf, " ");
+            strcat(userbuf, GET_USER(user));
+        } else {
+            add_modes &= ~CUS_VOICE;
+        }
+    }
+    if (rem_modes > 0) {
+        strcat(modebuf, "-");
+        if (rem_modes & CUS_OWNER) {
+            tmp = stripModePrefix(ircd->ownerset);
+            strcat(modebuf, tmp);
+            free(tmp);
+            strcat(userbuf, " ");
+            strcat(userbuf, GET_USER(user));
+        }
+        if (rem_modes & CUS_PROTECT) {
+            tmp = stripModePrefix(ircd->adminset);
+            strcat(modebuf, tmp);
+            free(tmp);
+            strcat(userbuf, " ");
+            strcat(userbuf, GET_USER(user));
+        }
+        if (rem_modes & CUS_OP) {
+            strcat(modebuf, "o");
+            strcat(userbuf, " ");
+            strcat(userbuf, GET_USER(user));
+            /* Do not mark a user as deopped if they are halfopd - Adam */
+            if (!(add_modes & CUS_HALFOP) && !(status & CUS_HALFOP))
+                add_modes |= CUS_DEOPPED;
+        }
+        if (rem_modes & CUS_HALFOP) {
+            strcat(modebuf, "h");
+            strcat(userbuf, " ");
+            strcat(userbuf, GET_USER(user));
+            /* Do not mark a user as deopped if they are opped - Adam */
+            if (!(add_modes & CUS_OP) && !(status & CUS_OP))
+                add_modes |= CUS_DEOPPED;
+        }
+    }
+
+    /* Here, both can be empty again due to the "isn't it set already?"
+     * checks above. -GD
+     */
+    if (!add_modes && !rem_modes)
+        return;
+
+    if (add_modes > 0)
+        chan_set_user_status(c, user, add_modes);
+    if (rem_modes > 0)
+        chan_remove_user_status(c, user, rem_modes);
+}
+
+/* ------------------------------------------------------------------------------- */
+
 int do_sync(User *u) {
 	Channel *c;
 	ChannelInfo *ci;
 	char *buffer, *chan;
+	char userbuff[BUFSIZE];
+	char finalub[BUFSIZE];
+	char modebuff[BUFSIZE];
+	char finalmb[BUFSIZE];
+
+	finalmb[0] = '\0';
+	finalub[0] = '\0';
 
 	buffer = moduleGetLastBuffer();
 	chan = myStrGetToken(buffer, ' ', 0);
@@ -148,12 +334,30 @@ int do_sync(User *u) {
 				cu->user->na->nc->flags &= ~NI_AUTOOP;
 			}
 
-			chan_set_correct_modes(cu->user, c, 1);
+			chan_get_correct_modes(cu->user, c, 1, modebuff, userbuff);
+
+			if ((strlen(finalmb) + strlen(finalub) + strlen(modebuff) + strlen(userbuff) + strlen(c->name) + 10) > BUFSIZE) {
+				anope_cmd_mode(whosends(ci), c->name, "%s%s", finalmb, finalub);
+				finalmb[0] = '\0';
+				finalub[0] = '\0';
+			}
+			else if (countModes(finalmb) + countModes(modebuff) > 12) {
+				anope_cmd_mode(whosends(ci), c->name, "%s%s", finalmb, finalub);
+				finalmb[0] = '\0';
+				finalub[0] = '\0';
+			}
+
+			strcat(finalmb, modebuff);
+			strcat(finalub, userbuff);
 
 			if (cu->user->na && cu->user->na->nc)
 				cu->user->na->nc->flags = flags;
 
 			cu = next;
+		}
+
+		if (countModes(finalmb) != 0) {
+			anope_cmd_mode(whosends(ci), c->name, "%s%s", finalmb, finalub);
 		}
 
 		moduleNoticeLang(s_ChanServ, u, LANG_SYNC_DONE, ci->name);
