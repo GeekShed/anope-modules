@@ -276,6 +276,8 @@ void add_languages(void) {
 		" Syntax: \002SAGROUP \037nick\037 \037doel nick\037\002\n"
 		" Dit commando plaatst de nicknaam in de groep van de doel nick.\n"
 		" \n"
+		" U kunt deze commando alleen gebruiken met een niet geregistreerde nicknaam\n"
+		" \n"
 		" Een nick kan slechts in één groep tegelijkertijd zijn.\n"
 		" Groepen samenvoegen is niet mogelijk.\n"
 		" \n"
