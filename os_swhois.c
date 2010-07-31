@@ -186,7 +186,7 @@ static int do_groupswhois(User *u)
 
 	if (!nick_identified(u))
 		return MOD_CONT;
-
+	
 	s = GetSWhois(u->nick);
 	if (s)
 	{
@@ -225,7 +225,7 @@ static int do_groupswhois(User *u)
 static void swhois_add(User *u, const char *nick, const char *swhois)
 {
 	NickAlias *na = findnick(nick);
-
+	
 	if (!na)
 	{
 		notice_lang(s_OperServ, u, NICK_X_NOT_REGISTERED, nick);
@@ -292,7 +292,7 @@ static void swhois_list(User *u)
 
 			tm = *localtime(&s->created);
 			strftime_lang(timebuf, sizeof(timebuf), u, STRFTIME_SHORT_DATE_FORMAT, &tm);
-
+			
 			notice_user(s_OperServ, u, "%d. %s %s %s %s", ++i, s->nick, s->creator, timebuf, s->swhois);
 		}
 
@@ -300,7 +300,7 @@ static void swhois_list(User *u)
 	}
 }
 
-static int do_update(User *u)
+static int do_update(User *u) 
 {
 	if (nick_identified(u))
 		swhois_on(u);
@@ -390,7 +390,7 @@ static void swhois_on(User *u)
 static void DelNick(const char *nick)
 {
 	SWhois *s = GetSWhois(nick);
-
+	
 	if (s)
 	{
 		libol_list_del((&SWhois_List), s);
@@ -401,7 +401,7 @@ static void DelNick(const char *nick)
 			free(s->swhois);
 		if (s->creator)
 			free(s->creator);
-
+		
 		free(s);
 	}
 }
