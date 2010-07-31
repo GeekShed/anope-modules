@@ -172,44 +172,45 @@ int do_sagroup(User * u) {
 				free(tnick);
 				return MOD_CONT;
 			}
-		}
-		na = NULL;
-		na = makealias(nick, target->nc);
 
-		if (na) {
-			/* Copy the data here from the group we are putting the nick in..
-			 * Anope doesn't like these entries to be NULL ;) */
-			na->last_usermask = sstrdup(target->last_usermask);
-			na->last_realname = sstrdup(target->last_realname);
-			na->time_registered = time(NULL);
-			na->last_seen = target->last_seen;
-			na->status &= ~(NS_IDENTIFIED | NS_RECOGNIZED);
+			na = NULL;
+			na = makealias(nick, target->nc);
 
-			if (!(na->nc->flags & NI_SERVICES_ROOT)) {
-				for (i = 0; i < RootNumber; i++) {
-					if (!stricmp(ServicesRoots[i], nick)) {
-						na->nc->flags |= NI_SERVICES_ROOT;
-						break;
+			if (na) {
+				/* Copy the data here from the group we are putting the nick in..
+				 * Anope doesn't like these entries to be NULL ;) */
+				na->last_usermask = sstrdup(target->last_usermask);
+				na->last_realname = sstrdup(target->last_realname);
+				na->time_registered = time(NULL);
+				na->last_seen = target->last_seen;
+				na->status &= ~(NS_IDENTIFIED | NS_RECOGNIZED);
+
+				if (!(na->nc->flags & NI_SERVICES_ROOT)) {
+					for (i = 0; i < RootNumber; i++) {
+						if (!stricmp(ServicesRoots[i], nick)) {
+							na->nc->flags |= NI_SERVICES_ROOT;
+							break;
+						}
 					}
 				}
+
+				if ((u2 = finduser(nick))) {
+					u2->na = na;
+					na->u = u2;
+
+					/* If some1 is currently using this nick, inform them and enforce. */
+					moduleNoticeLang(s_NickServ, u2, LANG_NICK_SAGROUPED, target->nc->display, u->nick);
+					validate_user(u2);
+				}
+
+				send_event(EVENT_GROUP, 1, nick);
+				alog("%s: %s!%s@%s used SAGROUP to make %s join group of %s (%s)", s_NickServ, u->nick, u->username, u->host, nick, target->nick, target->nc->display);
+				moduleNoticeLang(s_NickServ, u, LANG_GROUP_JOINED, nick, tnick, target->nc->display);
+
+			} else {
+				alog("%s: makealias(%s) failed", s_NickServ, nick);
+				notice_lang(s_NickServ, u, NICK_GROUP_FAILED);
 			}
-
-			if ((u2 = finduser(nick))) {
-				u2->na = na;
-				na->u = u2;
-
-				/* If some1 is currently using this nick, inform them and enforce. */
-				moduleNoticeLang(s_NickServ, u2, LANG_NICK_SAGROUPED, target->nc->display, u->nick);
-				validate_user(u2);
-			}
-
-			send_event(EVENT_GROUP, 1, nick);
-			alog("%s: %s!%s@%s used SAGROUP to make %s join group of %s (%s)", s_NickServ, u->nick, u->username, u->host, nick, target->nick, target->nc->display);
-			moduleNoticeLang(s_NickServ, u, LANG_GROUP_JOINED, nick, tnick, target->nc->display);
-
-		} else {
-			alog("%s: makealias(%s) failed", s_NickServ, nick);
-			notice_lang(s_NickServ, u, NICK_GROUP_FAILED);
 		}
 	}
 
