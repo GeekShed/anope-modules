@@ -33,8 +33,7 @@ int do_event_join(int argc, char **argv);
 **/
 int AnopeInit(int argc, char **argv)
 {
-	Command *c;
-	int status;
+	EvtHook *hook;
 
 	moduleAddAuthor(AUTHOR);
 	moduleAddVersion(VERSION);
