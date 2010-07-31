@@ -157,10 +157,10 @@ int do_sagroup(User * u) {
 	} else if (na && (na->nc->flags & NI_SERVICES_ROOT)) {
 		notice_lang(s_NickServ, u, PERMISSION_DENIED);
 	} else {
-		/* If the nick is already registered, drop it.
+		/* If the nick is already registered, bitch.
 		 * If not, check that it is valid. */
 		if (na) {
-			delnick(na);
+			notice_lang(s_NickServ, u, NICK_ALREADY_REGISTERED, u->nick);
 		} else {
 			int prefixlen = strlen(NSGuestNickPrefix);
 			int nicklen = strlen(nick);
@@ -251,10 +251,7 @@ void add_languages(void) {
 		" Syntax: \002SAGROUP \037nick\037 \037target nick\037\002\n"
 		" This command forces the nickname to join the target nicknames' group.\n"
 		" \n"
-		" It is recommended to use this command with a non-registered nick\n"
-		" because it will be registered automatically when issueing the command.\n"
-		" You may use it with a registered nick, however the nick will be\n"
-		" dropped first and then added to the new group.\n"
+		" You can only use this command with a non-registered nick\n"
 		" \n"
 		" A nick can only be in one group at a time.\n"
 		" Group merging is not possible.\n"
@@ -277,11 +274,6 @@ void add_languages(void) {
 		/* LANG_SAGROUP_SYNTAX_EXT */
 		" Syntax: \002SAGROUP \037nick\037 \037doel nick\037\002\n"
 		" Dit commando plaatst de nicknaam in de groep van de doel nick.\n"
-		" \n"
-		" Het is aangeraden om dit commando enkel met niet geregistreerde nicks te\n"
-		" gebruiket vermits de nick toch automatisch wordt geregistreerd.\n"
-		" Indien  het toch wordt gebruikt op een reeds geregistreerde nick, wordt\n"
-		" deze eerst verwijderd alvorens hij toegevoegd wordt aan de doelgroep.\n"
 		" \n"
 		" Een nick kan slechts in één groep tegelijkertijd zijn.\n"
 		" Groepen samenvoegen is niet mogelijk.\n"
