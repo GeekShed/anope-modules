@@ -4,9 +4,7 @@
 #define AUTHOR "Adam-"
 #define VERSION "2.3.0"
 
-#define LLIST_FOREACH(list, var) for (var = list->head; var; var = var->next)
-
-static LList SWhois_List;
+static libol_list_t SWhois_List;
 
 typedef struct swhois_ SWhois;
 struct swhois_
@@ -19,9 +17,9 @@ struct swhois_
 
 static SWhois *GetSWhois(const char *nick)
 {
-	LEntry *e;
+	libol_node_t *e;
 
-	LLIST_FOREACH((&SWhois_List), e)
+	LIST_FOREACH((&SWhois_List), e)
 	{
 		SWhois *s = (SWhois *)e->data;
 
@@ -37,8 +35,12 @@ static SWhois *GetSWhois(const char *nick)
 static int swhois_syntax(User *u);
 static void os_help(User *u);
 static int os_help_swhois(User *u);
+static void ns_help(User *u);
+static int ns_help_groupswhois(User *u);
 
 static int do_swhois(User *u);
+
+static int do_groupswhois(User *u);
 
 static void swhois_add(User *u, const char *nick, const char *swhois);
 static void swhois_del(User *u, const char *nick);
@@ -46,7 +48,6 @@ static void swhois_list(User *u);
 
 static int do_update(User *u);
 static int do_on_identify(int ac, char **av);
-static int do_on_logout(int ac, char **av);
 static int nick_drop(int ac, char **av);
 static int nick_expire(int ac, char **av);
 static int do_group(int ac, char **av);
@@ -54,7 +55,6 @@ static int do_db_save(int ac, char **av);
 static int do_db_backup(int ac, char **av);
 
 static void swhois_on(User *u);
-static void swhois_off(User *u);
 static void DelNick(const char *nick);
 
 static void LoadDatabase();
@@ -64,7 +64,7 @@ int AnopeInit(int argc, char **argv)
 	Command *c;
 	EvtHook *hook;
 
-	c = createCommand("SWHOIS", do_swhois, is_oper, -1, -1, -1, -1, -1);
+	c = createCommand("SWHOIS", do_swhois, is_services_oper, -1, -1, -1, -1, -1);
 	moduleAddCommand(OPERSERV, c, MOD_HEAD);
 	moduleAddHelp(c, os_help_swhois);
 	moduleSetOperHelp(os_help);
@@ -72,10 +72,12 @@ int AnopeInit(int argc, char **argv)
 	c = createCommand("UPDATE", do_update, NULL, -1, -1, -1, -1, -1);
 	moduleAddCommand(NICKSERV, c, MOD_HEAD);
 
-	hook = createEventHook(EVENT_NICK_IDENTIFY, do_on_identify);
-	moduleAddEventHook(hook);
+	c = createCommand("GROUPSWHOIS", do_groupswhois, nick_identified, -1, -1, -1, -1, -1);
+	moduleAddCommand(NICKSERV, c, MOD_HEAD);
+	moduleAddHelp(c, ns_help_groupswhois);
+	moduleSetNickHelp(ns_help);
 
-	hook = createEventHook(EVENT_NICK_LOGOUT, do_on_logout);
+	hook = createEventHook(EVENT_NICK_IDENTIFY, do_on_identify);
 	moduleAddEventHook(hook);
 
 	hook = createEventHook(EVENT_NICK_DROPPED, nick_drop);
@@ -103,6 +105,7 @@ int AnopeInit(int argc, char **argv)
 
 void AnopeFini(void)
 {
+
 }
 
 static int swhois_syntax(User *u)
@@ -120,13 +123,29 @@ static void os_help(User *u)
 
 static int os_help_swhois(User *u)
 {
-	if (is_oper(u))
+	if (is_services_oper(u))
 	{
 		notice_user(s_OperServ, u, "Syntax: \x2SWHOIS {ADD | DEL | LIST} [\x1Fnick\x1F] [\x1Fswhois\x1F]\x2");
 		notice_user(s_OperServ, u, " ");
 		notice_user(s_OperServ, u, "Allows you to assign or remove swhoises");
 		notice_user(s_OperServ, u, "for a given user.");
 	}
+
+	return MOD_CONT;
+}
+
+static void ns_help(User *u)
+{
+	notice_user(s_NickServ, u, "    GROUPSWHOIS  Syncs all the swhoises for all nicks in a group");
+}
+
+static int ns_help_groupswhois(User *u)
+{
+	notice_user(s_NickServ, u, "Syntax: \2GROUPSWHOIS\2");
+	notice_user(s_NickServ, u, " ");
+	notice_user(s_NickServ, u, "This command allows users to set the swhois of their");
+	notice_user(s_NickServ, u, "CURRENT nick to be the swhois for all nicks in the");
+	notice_user(s_NickServ, u, "same group.");
 
 	return MOD_CONT;
 }
@@ -161,13 +180,53 @@ static int do_swhois(User *u)
 	return MOD_CONT;
 }
 
+static int do_groupswhois(User *u)
+{
+	SWhois *s;
+
+	if (!nick_identified(u))
+		return MOD_CONT;
+
+	s = GetSWhois(u->nick);
+	if (s)
+	{
+		int i;
+
+		for (i = 0; i < u->na->nc->aliases.count; ++i)
+		{
+			NickAlias *na = (NickAlias *)u->na->nc->aliases.list[i];
+			SWhois *news;
+
+			if (na == u->na)
+				continue;
+
+			if (GetSWhois(na->nick))
+				DelNick(na->nick);
+
+			news = scalloc(sizeof(SWhois), 1);
+			news->nick = sstrdup(na->nick);
+			news->swhois = sstrdup(s->swhois);
+			news->creator = sstrdup(s->creator);
+			news->created = s->created;
+
+			libol_list_add(&SWhois_List, news);
+		}
+
+		notice_user(s_NickServ, u, "ALL SWhoises in your group set to \2%s\2", s->swhois);
+	}
+	else
+	{
+		notice_user(s_NickServ, u, "You do not have a swhois set.");
+	}
+
+	return MOD_CONT;
+}
+
 static void swhois_add(User *u, const char *nick, const char *swhois)
 {
 	NickAlias *na = findnick(nick);
-	NickCore *nc = na->nc;
-	User *u2;
 
-	if (!nc)
+	if (!na)
 	{
 		notice_lang(s_OperServ, u, NICK_X_NOT_REGISTERED, nick);
 	}
@@ -177,54 +236,44 @@ static void swhois_add(User *u, const char *nick, const char *swhois)
 	{
 		SWhois *s;
 
-		if (GetSWhois(nc->display))
-			DelNick(nc->display);
+		if (GetSWhois(na->nick))
+			DelNick(na->nick);
 
 		s = scalloc(sizeof(SWhois), 1);
-		s->nick = sstrdup(nc->display);
+		s->nick = sstrdup(na->nick);
 		s->swhois = sstrdup(swhois);
 		s->creator = sstrdup(u->nick);
 		s->created = time(NULL);
 
-		LListAddEntry(&SWhois_List, s);
-
-		if ((u2 = finduser(nick))) {
-			swhois_on(u2);
-		}
+		libol_list_add(&SWhois_List, s);
 
 		alog("%s: %s (%s!%s@%s) added %s to the swhois list", s_OperServ, u->nick, u->nick, u->username, u->host, nick);
-		notice_user(s_OperServ, u, "\x2%s\x2 has been added to the swhois list.", nc->display);
+		notice_user(s_OperServ, u, "\x2%s\x2 has been added to the swhois list.", na->nc->display);
 	}
 }
 
 static void swhois_del(User *u, const char *nick)
 {
 	NickAlias *na = findnick(nick);
-	NickCore *nc = na->nc;
-	User *u2;
 
-	if (!nc)
+	if (!na)
 		notice_lang(s_OperServ, u, NICK_X_NOT_REGISTERED, nick);
-	else if (GetSWhois(nc->display))
+	else if (GetSWhois(na->nick))
 	{
-		DelNick(nc->display);
+		DelNick(na->nick);
 
-		if ((u2 = finduser(nick))) {
-			swhois_off(u2);
-		}
-
-		alog("%s: %s (%s!%s@%s) removed %s from the swhois list.", s_OperServ, u->nick, u->nick, u->username, u->host, nc->display);
-		notice_user(s_OperServ, u, "\x2%s\x2 has been removed from the swhois list.", nc->display);
+		alog("%s: %s (%s!%s@%s) removed %s from the swhois list.", s_OperServ, u->nick, u->nick, u->username, u->host, na->nc->display);
+		notice_user(s_OperServ, u, "\x2%s\x2 has been removed from the swhois list.", na->nc->display);
 	}
 	else
-		notice_user(s_OperServ, u, "\x2%s\x2 was not found on the swhois list.", nc->display);
+		notice_user(s_OperServ, u, "\x2%s\x2 was not found on the swhois list.", na->nc->display);
 }
 
 static void swhois_list(User *u)
 {
-	LEntry *e;
+	libol_node_t *e;
 
-	if (SWhois_List.entries == 0)
+	if (SWhois_List.count == 0)
 	{
 		notice_user(s_OperServ, u, "The swhois list is empty.");
 	}
@@ -235,7 +284,7 @@ static void swhois_list(User *u)
 		notice_user(s_OperServ, u, "SWhois list:");
 		notice_user(s_OperServ, u, "Num  nick  creator  created  swhois");
 
-		LLIST_FOREACH((&SWhois_List), e)
+		LIST_FOREACH((&SWhois_List), e)
 		{
 			SWhois *s = (SWhois *)e->data;
 			char timebuf[64];
@@ -268,15 +317,6 @@ static int do_on_identify(int ac, char **av)
 	return MOD_CONT;
 }
 
-static int do_on_logout(int ac, char **av)
-{
-	User *u = finduser(av[0]);
-	if (u)
-		swhois_off(u);
-
-	return MOD_CONT;
-}
-
 static int nick_drop(int ac, char **av)
 {
 	DelNick(av[0]);
@@ -301,7 +341,7 @@ static int do_group(int ac, char **av)
 static int do_db_save(int ac, char **av)
 {
 	FILE *fd = fopen(DATABASEFILE, "w");
-	LEntry *e;
+	libol_node_t *e;
 	char buf[512];
 
 	if (!fd)
@@ -309,7 +349,7 @@ static int do_db_save(int ac, char **av)
 		return MOD_CONT;
 	}
 
-	LLIST_FOREACH((&SWhois_List), e)
+	LIST_FOREACH((&SWhois_List), e)
 	{
 		SWhois *s = (SWhois *)e->data;
 
@@ -339,9 +379,7 @@ static void swhois_on(User *u)
 	if (!nick_identified(u))
 		return;
 
-	swhois_off(u);
-
-	s = GetSWhois(u->na->nc->display);
+	s = GetSWhois(u->na->nick);
 	if (s)
 	{
 		anope_cmd_swhois(s_NickServ, u->nick, s->swhois);
@@ -349,22 +387,13 @@ static void swhois_on(User *u)
 	}
 }
 
-static void swhois_off(User *u)
-{
-        if (!nick_identified(u))
-                return;
-
-        anope_cmd_swhois(s_NickServ, u->nick, "");
-}
-
-
 static void DelNick(const char *nick)
 {
 	SWhois *s = GetSWhois(nick);
 
 	if (s)
 	{
-		LListDelData((&SWhois_List), s);
+		libol_list_del((&SWhois_List), s);
 
 		if (s->nick)
 			free(s->nick);
@@ -404,7 +433,7 @@ static void LoadDatabase()
 		free(p);
 		s->swhois = myStrGetTokenRemainder(buf, ' ', 3);
 
-		LListAddEntry((&SWhois_List), s);
+		libol_list_add((&SWhois_List), s);
 	}
 
 	fclose(f);
