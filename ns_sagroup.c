@@ -160,7 +160,7 @@ int do_sagroup(User * u) {
 		/* If the nick is already registered, bitch.
 		 * If not, check that it is valid. */
 		if (na) {
-			notice_lang(s_NickServ, u, NICK_ALREADY_REGISTERED, u->nick);
+			notice_lang(s_NickServ, u, NICK_ALREADY_REGISTERED, nick);
 		} else {
 			int prefixlen = strlen(NSGuestNickPrefix);
 			int nicklen = strlen(nick);
