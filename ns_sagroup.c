@@ -133,8 +133,8 @@ int do_sagroup(User * u) {
 	int i;
 
 	buffer = moduleGetLastBuffer();
-	nick = myStrGetToken(buffer, ' ', 0);
-	tnick = myStrGetToken(buffer, ' ', 1);
+	tnick = myStrGetToken(buffer, ' ', 0);
+	nick = myStrGetToken(buffer, ' ', 1);
 
 	if (readonly) {
 		notice_lang(s_NickServ, u, NICK_GROUP_DISABLED);
@@ -247,9 +247,9 @@ void add_languages(void) {
 		/* LANG_SAGROUP_DESC */
 		" SAGROUP      Force a nick to join a group",
 		/* LANG_SAGROUP_SYNTAX */
-		" Syntax: SAGROUP \037nick\037 \037target nick\037",
+		" Syntax: SAGROUP \037target nick\037 \037nick\037",
 		/* LANG_SAGROUP_SYNTAX_EXT */
-		" Syntax: \002SAGROUP \037nick\037 \037target nick\037\002\n"
+		" Syntax: \002SAGROUP \037target nick\037 \037nick\037\002\n"
 		" This command forces the nickname to join the target nicknames' group.\n"
 		" \n"
 		" You can only use this command with a non-registered nick\n"
