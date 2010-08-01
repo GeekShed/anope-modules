@@ -334,6 +334,9 @@ int do_sync(User *u) {
 				cu->user->na->nc->flags &= ~NI_AUTOOP;
 			}
 
+			userbuff[0] = '\0';
+			modebuff[0] = '\0';
+
 			chan_get_correct_modes(cu->user, c, 1, modebuff, userbuff);
 
 			if ((strlen(finalmb) + strlen(finalub) + strlen(modebuff) + strlen(userbuff) + strlen(c->name) + 10) > BUFSIZE) {
