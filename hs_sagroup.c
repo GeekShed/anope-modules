@@ -149,7 +149,7 @@ int do_group(char * nick, User * u)
     char *creator = NULL;
     HostCore *head = NULL;
     time_t time;
-    bool found = false;
+    boolean found = false;
 
     head = hostCoreListHead();
 
