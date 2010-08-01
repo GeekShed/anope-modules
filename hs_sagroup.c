@@ -119,8 +119,6 @@ int do_sagroup(User *u)
 		rtn = do_group(nick, u);
 	}
 	
-	if (text)
-		free(text);
 	if (nick)
 		free(nick);
 	
