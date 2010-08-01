@@ -103,6 +103,7 @@ int do_event_part(int argc, char **argv) {
 				if ((u = finduser(argv[1]))) {
 					common_svsmode(u, "+R", NULL);
 				}
+
 				delItem(af);
 			}
 		}
