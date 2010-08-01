@@ -245,7 +245,7 @@ NickAlias *makealias(const char *nick, NickCore * nc) {
 void add_languages(void) {
 	char *langtable_en_us[] = {
 		/* LANG_SAGROUP_DESC */
-		" SAGROUP      Force a nick to join a group",
+		"    SAGROUP      Force a nick to join a group",
 		/* LANG_SAGROUP_SYNTAX */
 		" Syntax: SAGROUP \037target nick\037 \037nick\037",
 		/* LANG_SAGROUP_SYNTAX_EXT */
@@ -267,32 +267,7 @@ void add_languages(void) {
 		" %s is already a member of the group of %s.",
 	};
 
-	char *langtable_nl[] = {
-		/* LANG_SAGROUP_DESC */
-		" SAGROUP      Forceer een nick in een groep",
-		/* LANG_SAGROUP_SYNTAX */
-		" Syntax: SAGROUP \037nick\037 \037doel nick\037",
-		/* LANG_SAGROUP_SYNTAX_EXT */
-		" Syntax: \002SAGROUP \037nick\037 \037doel nick\037\002\n"
-		" Dit commando plaatst de nicknaam in de groep van de doel nick.\n"
-		" \n"
-		" U kunt deze commando alleen gebruiken met een niet geregistreerde nicknaam\n"
-		" \n"
-		" Een nick kan slechts in één groep tegelijkertijd zijn.\n"
-		" Groepen samenvoegen is niet mogelijk.\n"
-		" \n"
-		" Note: Alle nicknamen van de groep hebben hetzelfde wachtwoord.",
-		/* LANG_GROUP_JOINED */
-		" %s is nu in de groep van %s(%s) geplaatst.",
-		/* LANG_NICK_SAGROUPED */
-		" Deze nickname is in de nick groep van %s geplaatst door %s. \n"
-		" Contacteer de Netwerk Administratie voor meer informatie.",
-		/* LANG_GROUP_SAME */
-		" %s is reeds lid van de groep van %s.",
-	};
-
 	moduleInsertLanguage(LANG_EN_US, LANG_NUM_STRINGS, langtable_en_us);
-	moduleInsertLanguage(LANG_NL, LANG_NUM_STRINGS, langtable_nl);
 }
 
 /* EOF */
