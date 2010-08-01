@@ -21,12 +21,11 @@
 #define VERSION "1.0"
 
 /* Multi-language stuff */
-#define LANG_NUM_STRINGS			4
+#define LANG_NUM_STRINGS			3
 
-#define HSSAGROUP_SUCCESS			0
-#define HSSAGROUP_SYNTAX			1
-#define HSSAGROUP_HELP_SAGROUP		2
-#define HSSAGROUP_HELP				3
+#define HSSAGROUP_SYNTAX			0
+#define HSSAGROUP_HELP_SAGROUP		1
+#define HSSAGROUP_HELP				2
 
 /****************************************TYPEDEFS***************************************/
 
@@ -118,10 +117,10 @@ int do_sagroup(User *u)
 	else {
 		rtn = do_group(nick, u);
 	}
-	
+
 	if (nick)
 		free(nick);
-	
+
 	return rtn;
 }
 
@@ -222,8 +221,6 @@ int do_help_sagroup(User *u)
 void mAddLanguages(void)
 {
 	char *langtable_en_us[] = {
-		/* HSSAGROUP_SUCCESS */
-		"All vhost's in the group %s have been set to %s",
 		/* HSSAGROUP_SYNTAX */
 		"Syntax: SAGROUP nickname",
 		/* HSSAGROUP_HELP_SAGROUP */
