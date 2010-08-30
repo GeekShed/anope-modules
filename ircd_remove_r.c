@@ -91,6 +91,8 @@ int do_event_join(int argc, char **argv) {
 			}
 		}
 	}
+
+	return MOD_CONT;
 }
 
 int do_event_part(int argc, char **argv) {
@@ -108,6 +110,8 @@ int do_event_part(int argc, char **argv) {
 			}
 		}
 	}
+
+	return MOD_CONT;
 }
 
 /************************************CUSTOM FUNCTIONS***********************************/
@@ -152,6 +156,8 @@ void delItem(AffectedUser *item) {
 		// If it's the last item (i.e. null next)
 		else if (item->next == NULL) {
 			item->prev->next = NULL;
+			// NOTE TO PHIL: THE FOLLOWING LINE IS MUY IMPORTANTE - Adam
+			curItem = item->prev;
 		}
 		// If it's a middle item
 		else {

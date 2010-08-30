@@ -233,6 +233,8 @@ void delItem(RecentRGItem *item)
 		// If it's the last item (i.e. null next)
 		else if (item->next == NULL) {
 			item->prev->next = NULL;
+			// IMPORTANT LINE HERE PHIL vvvvvvvvvvvvvvvv
+			curItem = item->prev;
 		}
 		// If it's a middle item
 		else {
