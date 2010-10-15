@@ -108,14 +108,19 @@ void AnopeFini(void) {
  * @param u The user who is requesting help
  **/
 void do_help_list(User *u) {
-    moduleNoticeLang(s_NickServ, u, LANG_SAGROUP_DESC);
+	if (is_services_admin(u)) {
+   		moduleNoticeLang(s_NickServ, u, LANG_SAGROUP_DESC);
+	}
 }
 
 /**
  * Show the extended help on the GROUP command.
  **/
 int do_help(User *u) {
-	moduleNoticeLang(s_NickServ, u, LANG_SAGROUP_SYNTAX_EXT);
+	if (is_services_admin(u)) {
+		moduleNoticeLang(s_NickServ, u, LANG_SAGROUP_SYNTAX_EXT);
+	}
+
 	return MOD_CONT;
 }
 
