@@ -163,7 +163,7 @@ int do_uuid(User *u)
 				nc = na->nc;
 				
 				if ((uuid = moduleGetData(&nc->moduleData, "uuid"))) {
-					moduleNoticeLang(s_NickServ, u, NSUUID_THEID, nc->display, uuid);
+					moduleNoticeLang(s_NickServ, u, NSUUID_THEID, nick, nc->display, uuid);
 				}
 				else {
 					notice_user(s_NickServ, u, "%s does not have a UUID! This shouldn't happen.", nc->display);
@@ -490,7 +490,7 @@ void mAddLanguages(void)
 		/* NSUUID_YOURID */
 		"Your UUID is: %s",
 		/* NSUUID_THEID */
-		"The UUID for %s is: %s",
+		"The UUID for %s (%s) is: %s",
 		/* NSUUID_SYNTAX */
 		"Syntax: UUID [nickname]",
 		/* NSUUID_HELP_UUID */
